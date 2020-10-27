@@ -18,6 +18,8 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       `cats-core`,
       `cats-effect`,
+       pureconfig,
+      `refined-pureconfig`,
       `scala-test` % Test
     )
   )
