@@ -1,5 +1,6 @@
 package com.github.fehu.s4nbdtt
 
+import cats.data.NonEmptyList
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.Positive
 import eu.timepit.refined.scalacheck.numeric._
@@ -27,4 +28,16 @@ object Arbitraries {
     Gen.oneOf(DroneMv.MoveForward, DroneMv.RotateLeft, DroneMv.RotateRight)
   }
 
+  implicit def arbitraryDroneProg(implicit aRoute: Arbitrary[DroneRoute], cfg: Config.Drone): Arbitrary[DroneProg] =
+    Arbitrary {
+      AGens.genDroneProg(1, cfg.capacity.value).map(_._1)
+    }
+
+  object AGens {
+    def genDroneProg(minRoutes: Int, maxRoutes: Int)(implicit aRoute: Arbitrary[DroneRoute]): Gen[(DroneProg, Int)] =
+      for {
+        n      <- Gen.chooseNum(minRoutes, maxRoutes)
+        routes <- Gen.listOfN(n, arbitrary[DroneRoute])
+      } yield DroneProg(NonEmptyList.fromListUnsafe(routes)) -> n
+  }
 }

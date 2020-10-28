@@ -2,7 +2,7 @@ package com.github.fehu.s4nbdtt
 
 import scala.jdk.CollectionConverters._
 
-import cats.data.{ NonEmptyList, Validated }
+import cats.data.NonEmptyList
 import cats.syntax.validated._
 import eu.timepit.refined.refineV
 import eu.timepit.refined.collection.NonEmpty
@@ -33,7 +33,7 @@ class RouteParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProp
       forAll { cfg: Config.Drone.Commands =>
         val parser = new DroneRouteParser(cfg)
         forAll(genInvalidDroneRouteString(cfg, 5)) { case (routeStr, invalid) =>
-          parser.parse(routeStr) shouldBe Validated.invalid(invalid.map(DroneProgDefinitionError.InvalidCommand(_)))
+          parser.parse(routeStr) shouldBe invalid.map(DroneProgDefinitionError.InvalidCommand(_)).invalid
         }
       }
   }
