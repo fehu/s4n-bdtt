@@ -14,6 +14,7 @@ import pureconfig.generic.auto._
 final case class Config(
   grid: Config.SymmetricGrid,
   drone: Config.Drone,
+  drones: Int Refined Positive,
   routes: Config.Files,
   reports: Config.Files
 )
@@ -33,12 +34,11 @@ object Config {
 
   final case class Drone(
     capacity: Int Refined Positive,
-    count: Int Refined Positive,
     commands: Drone.Commands
   )
 
   object Drone {
-    final case class Commands(moveForward: Char, turnLeft: Char, turnRight: Char)
+    final case class Commands(moveForward: Char, rotateLeft: Char, rotateRight: Char)
   }
 
   final case class Files(path: Path, prefix: String, suffix: String)
