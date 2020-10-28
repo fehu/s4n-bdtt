@@ -20,6 +20,9 @@ lazy val root = (project in file("."))
       `cats-effect`,
        pureconfig,
       `refined-pureconfig`,
-      `scala-test` % Test
+      `refined-scalacheck` % Test,
+      `scala-check` % Test,
+      `scala-test` % Test,
+      `scala-test-check` % Test
     )
   )
