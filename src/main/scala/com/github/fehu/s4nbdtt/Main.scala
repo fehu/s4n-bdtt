@@ -64,15 +64,12 @@ object Main extends IOApp {
       .as(progs)
   }
 
-  // TODO
   private def writeReport[N](cfg: Config, name: ProgName, result: NonEmptyList[DroneState[N]]): IO[Unit] = {
     val report =
       s"""${cfg.reportHeader}
          |
          |${result.toList.map{ case DroneState(pos, dir) => s"$pos ${cfg.showDirection.show(dir)}" }.mkString("\n")}
          |""".stripMargin
-    IO {
-      println(s"$name\n\n$report\n\n")
-    }
+    FileIO.write[IO](cfg.reports, name, report)
   }
 }
