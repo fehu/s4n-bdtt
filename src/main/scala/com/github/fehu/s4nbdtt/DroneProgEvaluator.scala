@@ -4,6 +4,7 @@ import cats.Monad
 import cats.data.NonEmptyList
 import cats.syntax.apply._
 import cats.syntax.foldable._
+import cats.syntax.bifunctor._
 import cats.syntax.functor._
 
 class DroneProgEvaluator[F[_]: Monad, N](
@@ -29,6 +30,18 @@ class DroneProgEvaluator[F[_]: Monad, N](
     case DroneMv.RotateRight => rotateRight(state)
   }
 
+}
+
+class DroneProgValidator[N: Numeric](grid: Grid[N]) {
+  /** Validate the program, evaluating expected result. */
+  def validate(initialState: DroneState[N], prog: DroneProg): Either[Grid.Invalid, NonEmptyList[DroneState[N]]] =
+    initialState.position.validate(grid).leftWiden[Grid.Invalid] *> evaluator.evalProg(initialState, prog)
+
+  private val evaluator = new DroneProgEvaluator[Either[Grid.Invalid, *], N](
+    moveForward = state => state.position.move(state.orientation, grid).map(p => state.copy(position = p)),
+    rotateLeft  = state => Right(state.rotateLeft),
+    rotateRight = state => Right(state.rotateRight)
+  )
 }
 
 class DroneProgExecutor[F[_]: Monad, N: Numeric](ctrl: DroneCtrl[F], initialState: DroneState[N]) {
