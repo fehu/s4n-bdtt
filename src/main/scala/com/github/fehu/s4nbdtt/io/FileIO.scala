@@ -27,7 +27,7 @@ object FileIO {
       contents <- files.traverse(read[F])
       prefL     = cfg.prefix.length
       suffL     = cfg.suffix.length
-      subNames  = files.map(_.getName.take(prefL).dropRight(suffL))
+      subNames  = files.map(_.getName.drop(prefL).dropRight(suffL))
     } yield subNames zip contents
 
   def read[F[_]](cfg: Config.Files, subName: SubName)(implicit F: Sync[F]): F[Contents] =
