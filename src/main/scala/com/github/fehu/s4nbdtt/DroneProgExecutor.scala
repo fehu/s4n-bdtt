@@ -14,7 +14,7 @@ class DroneProgExecutor[F[_]: Monad](ctrl: DroneCtrl[F], initialState: DroneProg
    */
   def exec(prog: DroneProg): F[NonEmptyList[State]] =
     prog.routes.foldM(List(initialState)) {
-      case (hist@List(state, _), route) =>
+      case (hist @ state :: _, route) =>
         exec(state, route).map(_ :: hist)
     }.map(
       NonEmptyList fromListUnsafe _.reverse.tail
