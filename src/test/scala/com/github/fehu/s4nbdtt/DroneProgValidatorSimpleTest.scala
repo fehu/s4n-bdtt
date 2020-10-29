@@ -23,11 +23,11 @@ class DroneProgValidatorSimpleTest extends AnyWordSpec with TableDrivenPropertyC
   val invalidRoute2 = DroneRoute(NonEmptyList(RotateLeft, List.fill(5)(MoveForward)))
 
   val invalidProg1 = DroneProg(NonEmptyList.of(invalidRoute1))
-  val error1       = Grid.InvalidMove(grid, Grid.Position.unsafe(0, 3), North, Grid.Position.unsafe(0, 4))
+  val error1       = 0 -> Grid.InvalidMove(grid, Grid.Position.unsafe(0, 3), North, Grid.Position.unsafe(0, 4))
   val invalidProg2 = DroneProg(NonEmptyList.of(invalidRoute2))
-  val error2       = Grid.InvalidMove(grid, Grid.Position.unsafe(-3, 0), West, Grid.Position.unsafe(-4, 0))
+  val error2       = 0 -> Grid.InvalidMove(grid, Grid.Position.unsafe(-3, 0), West, Grid.Position.unsafe(-4, 0))
   val invalidProg3 = DroneProg(NonEmptyList.of(validRoute1, invalidRoute2))
-  val error3       = Grid.InvalidMove(grid, Grid.Position.unsafe(-3, 3), West, Grid.Position.unsafe(-4, 3))
+  val error3       = 1 -> Grid.InvalidMove(grid, Grid.Position.unsafe(-3, 3), West, Grid.Position.unsafe(-4, 3))
 
   val invalidState0 = DroneState(4, 4, North)
 
@@ -49,7 +49,7 @@ class DroneProgValidatorSimpleTest extends AnyWordSpec with TableDrivenPropertyC
       }
 
     "report error on invalid initial drone position" in {
-      validator.validate(invalidState0, validProg) shouldBe Left(Grid.InvalidPosition(grid, invalidState0.position))
+      validator.validate(invalidState0, validProg) shouldBe Left(0 -> Grid.InvalidPosition(grid, invalidState0.position))
     }
   }
 
