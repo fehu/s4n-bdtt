@@ -24,7 +24,7 @@ object Main extends IOApp {
       ctrl = new DroneCtrlNoOp[IO] // TODO: inject?
       executor = new DroneProgExecutor(ctrl, initialState)
       _ <- progs.parTraverse_ { case (name, prog) =>
-             executor.exec(prog).flatMap(writeReport(config, name, _))
+             executor.exec(prog).flatMap(writeReport(config.reports, name, _))
            }
       // Done
     } yield ExitCode.Success
@@ -64,12 +64,12 @@ object Main extends IOApp {
       .as(progs)
   }
 
-  private def writeReport[N](cfg: Config, name: ProgName, result: NonEmptyList[DroneState[N]]): IO[Unit] = {
+  private def writeReport[N](cfg: Config.Reports, name: ProgName, result: NonEmptyList[DroneState[N]]): IO[Unit] = {
     val report =
-      s"""${cfg.reportHeader}
+      s"""${cfg.header}
          |
          |${result.toList.map{ case DroneState(pos, dir) => s"$pos ${cfg.showDirection.show(dir)}" }.mkString("\n")}
          |""".stripMargin
-    FileIO.write[IO](cfg.reports, name, report)
+    FileIO.write[IO](cfg.files, name, report)
   }
 }

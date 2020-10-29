@@ -18,9 +18,7 @@ final case class Config(
   drone: Config.Drone,
   drones: Int Refined Positive,
   routes: Config.Files,
-  reports: Config.Files,
-  reportHeader: String,
-  showDirection: Config.ShowDirection
+  reports: Config.Reports
 )
 
 object Config {
@@ -60,6 +58,12 @@ object Config {
   }
 
   final case class Files(path: Path, prefix: String, suffix: String)
+
+  final case class Reports(
+    files: Files,
+    header: String,
+    showDirection: Config.ShowDirection
+  )
 
   final case class ShowDirection(
     north: String Refined NonEmpty,
