@@ -4,8 +4,9 @@ import cats.data.NonEmptyList
 import cats.effect.{ ExitCode, IO, IOApp }
 import cats.syntax.alternative._
 import cats.syntax.bifunctor._
-import cats.syntax.traverse._
 import cats.syntax.parallel._
+import cats.syntax.show._
+import cats.syntax.traverse._
 
 import com.github.fehu.s4nbdtt.io.FileIO
 import com.github.fehu.s4nbdtt.stub.DroneCtrlNoOp
@@ -22,9 +23,9 @@ object Main extends IOApp {
                   IO.raiseError(new TooManyProgramsException(progs0.length, config.drones.value))
                 )
       parser  = new DroneProgParser(config.drone)
-      (failed0, progs) = progs0.map { case (name, raw) => parser.parse(raw).bimap(name -> _, name -> _) }.separate
+      (failed0, progs) = progs0.map { case (name, raw) => parser.parse(raw).bimap(name -> _.map(_.show), name -> _) }.separate
       failedOpt = NonEmptyList.fromList(failed0)
-      _        <- failedOpt.traverse(errors => IO.raiseError(new DroneProgramsParseException(errors)))
+      _        <- failedOpt.traverse(errors => IO.raiseError(new DroneProgramsException(errors)))
       // Validate progs
       grid      = SymmetricZeroCenteredGrid(config.grid)
       validator = new DroneProgValidator(grid)

@@ -4,6 +4,7 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.syntax.validated._
+import cats.syntax.show._
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
@@ -41,7 +42,9 @@ class DroneProgExecutorPredefinedTest extends AsyncWordSpec with AsyncIOSpec wit
   def test(subName: String, expected: NonEmptyList[DroneState[Int]]): IO[Assertion] =
     for {
       raw  <- FileIO.read[IO](cfg.routes, subName)
-      prog <- progParser.parse(raw).leftMap(DroneProgramsParseException.one(subName, _)).liftTo[IO]
+      prog <- progParser.parse(raw)
+                        .leftMap(errs => new DroneProgramsException(NonEmptyList.of(subName -> errs.map(_.show))))
+                        .liftTo[IO]
       res  <- progExecutor.exec(prog)
     } yield res shouldBe expected
 

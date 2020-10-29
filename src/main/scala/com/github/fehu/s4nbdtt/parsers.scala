@@ -94,19 +94,3 @@ object DroneProgDefinitionError {
         s"Too many routes defined for the drone: $n. Max: $max."
     }
 }
-
-class DroneProgramsParseException(failed: NonEmptyList[(String, NonEmptyList[DroneProgDefinitionError])])
-  extends Exception({
-    val indented = failed.toList.flatMap { case (name, errors) =>
-      val shownErrs = errors.toList.map(err => s"    - ${err.show}")
-      s"  $name:" :: shownErrs
-    }
-    s"""Errors on parsing drone program(s):
-       |$indented
-       |""".stripMargin
-  })
-
-object DroneProgramsParseException {
-  def one(progName: String, errors: NonEmptyList[DroneProgDefinitionError]): DroneProgramsParseException =
-    new DroneProgramsParseException(NonEmptyList.one(progName -> errors))
-}
