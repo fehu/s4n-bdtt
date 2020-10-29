@@ -17,7 +17,7 @@ object Grid {
    * @param x Horizontal position. West < East.
    * @param y Vertical position. South < North.
    */
-  final case class Position[N](x: N, y: N) {
+  final case class Position[N] protected(x: N, y: N) {
     def unsafeMove(direction: Direction)(implicit num: Numeric[N]): Position[N] =
       Position.unsafeMove(this, direction)
     
