@@ -22,3 +22,11 @@ object DroneProgramsException {
   type ProgramName = String
   type ErrorDescription = String
 }
+
+class NoProgramsFound(path: Path) extends Exception(
+  s"No programs were found at ${path.toAbsolutePath}."
+)
+
+class TooManyProgramsException(progs: Int, drones: Int) extends Exception(
+  s"$progs programs found, but there are only $drones drones."
+)
