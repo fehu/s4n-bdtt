@@ -15,17 +15,20 @@ import com.github.fehu.s4nbdtt.io.FileIO
 
 abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N]) {
   def initialState: DroneState[N]
-  def droneCtrl: F[DroneCtrl[F]]
+  def droneCtrl(name: String): F[DroneCtrl[F]]
   
   def runApp: F[Unit] =
     for {
       config   <- Config.default[F]
       rawProgs <- readPrograms(config)
       progs    <- parseAndValidate(config, rawProgs)
-      ctrl     <- droneCtrl
-      executor = new DroneProgExecutor(ctrl, initialState)
       _ <- progs.parTraverse_ { case (name, prog) =>
-             executor.exec(prog).flatMap(writeReport(config.reports, name, _))
+            for {
+              ctrl    <- droneCtrl(name)
+              executor = new DroneProgExecutor(ctrl, initialState)
+              result  <- executor.exec(prog)
+              _       <- writeReport(config.reports, name, result)
+            } yield ()
            }
     } yield ()
 

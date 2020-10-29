@@ -9,7 +9,7 @@ object NoOpIOAppExample extends IOApp {
   val app = new DroneApp[IO, Int] {
     def initialState: DroneState[Int] = defaultDroneInitialStateInt
 
-    def droneCtrl: IO[DroneCtrl[IO]] = IO.pure { new DroneCtrlNoOp }
+    def droneCtrl(name: String): IO[DroneCtrl[IO]] = IO.pure { new DroneCtrlNoOp }
   }
 
   def run(args: List[String]): IO[ExitCode] = app.runApp.as(ExitCode.Success)
