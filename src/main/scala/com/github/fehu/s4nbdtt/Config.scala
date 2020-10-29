@@ -5,6 +5,7 @@ import java.nio.file.Path
 import cats.effect.Sync
 import cats.syntax.either._
 import eu.timepit.refined.api.Refined
+import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.numeric.Positive
 import eu.timepit.refined.pureconfig._
 import pureconfig.{ ConfigReader, ConfigSource }
@@ -17,7 +18,9 @@ final case class Config(
   drone: Config.Drone,
   drones: Int Refined Positive,
   routes: Config.Files,
-  reports: Config.Files
+  reports: Config.Files,
+  reportHeader: String,
+  showDirection: Config.ShowDirection
 )
 
 object Config {
@@ -57,4 +60,18 @@ object Config {
   }
 
   final case class Files(path: Path, prefix: String, suffix: String)
+
+  final case class ShowDirection(
+    north: String Refined NonEmpty,
+    east: String Refined NonEmpty,
+    south: String Refined NonEmpty,
+    west: String Refined NonEmpty
+  ) {
+    def show(direction: Direction): String = direction match {
+      case Direction.North => north.value
+      case Direction.East  => east.value
+      case Direction.South => south.value
+      case Direction.West  => west.value
+    }
+  }
 }
