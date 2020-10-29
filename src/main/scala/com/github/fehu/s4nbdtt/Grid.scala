@@ -63,3 +63,8 @@ class SymmetricZeroCenteredGrid[N: Numeric](halfHeight: N, halfWidth: N) extends
     position.y >= -halfHeight &&
     position.y <=  halfHeight
 }
+
+object SymmetricZeroCenteredGrid {
+  def apply[N: Numeric](cfg: Config.SymmetricGrid, fromInt: Int => N = identity[Int] _): SymmetricZeroCenteredGrid[N] =
+    new SymmetricZeroCenteredGrid[N](fromInt(cfg.halfHeight.value), fromInt(cfg.halfWidth.value))
+}
