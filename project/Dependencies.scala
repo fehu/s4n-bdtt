@@ -4,6 +4,8 @@ object Dependencies {
   lazy val `cats-core`              = "org.typelevel"         %% "cats-core"                     % Version.cats
   lazy val `cats-effect`            = "org.typelevel"         %% "cats-effect"                   % Version.catsEffect
   lazy val `cats-effect-scala-test` = "com.codecommit"        %% "cats-effect-testing-scalatest" % Version.catsEffectTest
+  lazy val `log4cats-slf4j`         = "io.chrisdavenport"     %% "log4cats-slf4j"                % Version.log4cats
+  lazy val `logback-classic`        = "ch.qos.logback"         % "logback-classic"               % Version.logback
   lazy val  pureconfig              = "com.github.pureconfig" %% "pureconfig"                    % Version.pureconfig
   lazy val `refined-pureconfig`     = "eu.timepit"            %% "refined-pureconfig"            % Version.refined
   lazy val `refined-scala-check`    = "eu.timepit"            %% "refined-scalacheck"            % Version.refined
@@ -22,6 +24,8 @@ object Dependencies {
     lazy val catsEffect       = "2.2.0"
     lazy val catsEffectTest   = "0.4.1"
     lazy val kindProjector    = "0.11.0"
+    lazy val log4cats         = "1.1.1"
+    lazy val logback          = "1.2.3"
     lazy val pureconfig       = "0.14.0"
     lazy val refined          = "0.9.17"
     lazy val scalaCheck       = "1.14.3"

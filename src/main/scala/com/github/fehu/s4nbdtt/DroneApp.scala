@@ -4,33 +4,45 @@ import cats.Parallel
 import cats.data.NonEmptyList
 import cats.effect.Sync
 import cats.syntax.alternative._
+import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.show._
 import cats.syntax.traverse._
+import _root_.io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import com.github.fehu.s4nbdtt.io.FileIO
 
 abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N]) {
   def initialState: DroneState[N]
   def droneCtrl(name: String): F[DroneCtrl[F]]
-  
-  def runApp: F[Unit] =
+
+  private lazy val logger = Slf4jLogger.getLogger[F]
+
+  def runApp: F[Unit] = {
     for {
       config   <- Config.default[F]
+      _        <- logger.debug(s"Read app configuration: $config")
       rawProgs <- readPrograms(config)
+      _        <- logger.info(s"Found ${rawProgs.length} drone programs")
       progs    <- parseAndValidate(config, rawProgs)
+      _        <- logger.info("All programs passed validations.")
+      _        <- logger.info("Beginning execution.")
       _ <- progs.parTraverse_ { case (name, prog) =>
             for {
               ctrl    <- droneCtrl(name)
               executor = new DroneProgExecutor(ctrl, initialState)
+              _       <- logger.info(s"""Start execution of program "$name"""")
               result  <- executor.exec(prog)
+              _       <- logger.info(s"""Program "$name" executed""")
               _       <- writeReport(config.reports, name, result)
             } yield ()
            }
+      _ <- logger.info("All programs executed")
     } yield ()
+  }.onError(logger.error(_)("Drone app execution error"))
 
   protected type ProgName = String
   protected type RawProg = String
