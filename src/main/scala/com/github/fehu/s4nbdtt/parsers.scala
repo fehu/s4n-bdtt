@@ -87,7 +87,7 @@ object DroneProgDefinitionError {
     Show.show {
       case InvalidCommands(index, raw, invalid) =>
         val invalidStr = invalid.toList.map(i => s"'${i.cmd}'").mkString("[", ", ", "]")
-        s"""Invalid drone command(s) $invalidStr at route "$raw""""
+        s"""Invalid drone command(s) at route $index "$raw": $invalidStr"""
       case NoRoutes =>
         "No routes are defined."
       case TooManyRoutes(n, max) =>
