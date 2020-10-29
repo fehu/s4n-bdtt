@@ -36,7 +36,7 @@ class DroneProgExecutorPredefinedTest extends AsyncWordSpec with AsyncIOSpec wit
   private lazy val cfg = Config.default[IO].unsafeRunSync()
   private lazy val progParser = new DroneProgParser(cfg.drone)
 
-  private lazy val droneCtrl = new DroneCtrlNoOp[IO]
+  private lazy val droneCtrl = new DroneCtrlNoOp[IO]("test")
   private lazy val progExecutor = new DroneProgExecutor[IO, Int](droneCtrl, state0)
 
   def test(subName: String, expected: NonEmptyList[DroneState[Int]]): IO[Assertion] =

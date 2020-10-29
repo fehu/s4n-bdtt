@@ -2,7 +2,7 @@ package com.github.fehu.s4nbdtt
 
 import cats.Parallel
 import cats.data.NonEmptyList
-import cats.effect.{ Resource, Sync }
+import cats.effect.Sync
 import cats.syntax.alternative._
 import cats.syntax.applicativeError._
 import cats.syntax.apply._
@@ -18,7 +18,7 @@ import com.github.fehu.s4nbdtt.io.FileIO
 
 abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N]) {
   def initialState: DroneState[N]
-  def droneCtrl(name: String): Resource[F, DroneCtrl[F]]
+  def dronesPool: F[DroneCtrl.Pool[F]]
 
   private lazy val logger = Slf4jLogger.getLogger[F]
 
@@ -31,14 +31,16 @@ abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N])
       progs    <- parseAndValidate(config, rawProgs)
       _        <- logger.info("All programs passed validations.")
       _        <- logger.info("Beginning execution.")
+      pool     <- dronesPool
       _ <- progs.parTraverse_ { case (name, prog) =>
-             droneCtrl(name).use { ctrl =>
-               val executor = new DroneProgExecutor(ctrl, initialState)
+             pool.control(name).use { ctrl =>
                for {
-                 _   <- logger.info(s"""Start execution of program "$name"""")
-                 res <- executor.exec(prog)
-                 _   <- logger.info(s"""Program "$name" executed""")
-                 _   <- writeReport(config.reports, name, res)
+                 _       <- logger.info(s"Acquired drone control from pool ($name)")
+                 executor = new DroneProgExecutor(ctrl, initialState)
+                 _       <- logger.info(s"""Start execution of program "$name"""")
+                 result  <- executor.exec(prog)
+                 _       <- logger.info(s"""Program "$name" executed""")
+                 _       <- writeReport(config.reports, name, result)
                } yield ()
              }
            }

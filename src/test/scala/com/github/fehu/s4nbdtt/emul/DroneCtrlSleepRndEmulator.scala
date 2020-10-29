@@ -14,7 +14,7 @@ import com.github.fehu.s4nbdtt.DroneCtrl
 
 /** Emulates drone control by sleeping random time. */
 class DroneCtrlSleepRndEmulator[F[_]: Sync: Timer](
-  name: String,
+  val name: String,
   moveTimeRnd: Rnd[F, FiniteDuration],
   rotateTimeRnd: Rnd[F, FiniteDuration],
   deliverTimeRnd: Rnd[F, FiniteDuration],
