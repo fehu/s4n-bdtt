@@ -1,4 +1,4 @@
-package com.github.fehu.s4nbdtt.stub
+package com.github.fehu.s4nbdtt.emul
 
 import cats.Applicative
 
