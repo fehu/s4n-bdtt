@@ -12,6 +12,7 @@ object Dependencies {
   lazy val `scala-check`            = "org.scalacheck"        %% "scalacheck"                    % Version.scalaCheck
   lazy val `scala-test`             = "org.scalatest"         %% "scalatest"                     % Version.scalaTest
   lazy val `scala-test-check`       = "org.scalatestplus"     %% "scalacheck-1-14"               % Version.scalaTestCheck
+  lazy val  spire                   = "org.typelevel"         %% "spire"                         % Version.spire
 
   object Plugin {
     lazy val `kind-projector`     = "org.typelevel" %% "kind-projector"     % Version.kindProjector cross CrossVersion.full
@@ -31,5 +32,6 @@ object Dependencies {
     lazy val scalaCheck       = "1.14.3"
     lazy val scalaTest        = "3.2.2"
     lazy val scalaTestCheck   = "3.2.2.0"
+    lazy val spire            = "0.17.0"
   }
 }

@@ -26,6 +26,7 @@ lazy val root = (project in file("."))
       `refined-scala-check` % Test,
       `scala-check` % Test,
       `scala-test` % Test,
-      `scala-test-check` % Test
+      `scala-test-check` % Test,
+       spire % Test
     )
   )
