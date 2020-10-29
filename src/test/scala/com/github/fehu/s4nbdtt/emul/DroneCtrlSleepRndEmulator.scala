@@ -17,13 +17,15 @@ class DroneCtrlSleepRndEmulator[F[_]: Sync: Timer](
   name: String,
   moveTimeRnd: Rnd[F, FiniteDuration],
   rotateTimeRnd: Rnd[F, FiniteDuration],
-  deliverTimeRnd: Rnd[F, FiniteDuration]
+  deliverTimeRnd: Rnd[F, FiniteDuration],
+  returnTimeRnd: Rnd[F, FiniteDuration]
 ) extends DroneCtrl[F] {
 
-  def moveForward: F[Unit] = sleepRndLog("moving forward", moveTimeRnd)
-  def rotateLeft: F[Unit]  = sleepRndLog("rotating left",  rotateTimeRnd)
-  def rotateRight: F[Unit] = sleepRndLog("rotating right", rotateTimeRnd)
-  def deliver: F[Unit]     = sleepRndLog("delivery",       deliverTimeRnd)
+  def moveForward: F[Unit]  = sleepRndLog("moving forward", moveTimeRnd)
+  def rotateLeft: F[Unit]   = sleepRndLog("rotating left",  rotateTimeRnd)
+  def rotateRight: F[Unit]  = sleepRndLog("rotating right", rotateTimeRnd)
+  def deliver: F[Unit]      = sleepRndLog("delivery",       deliverTimeRnd)
+  def returnToBase: F[Unit] = sleepRndLog("returning",      returnTimeRnd)
 
   private def sleepRnd(rnd: Rnd[F, FiniteDuration]): F[Unit] =
     rnd.gen flatMap Timer[F].sleep
@@ -43,13 +45,16 @@ object DroneCtrlSleepRndEmulator {
     rotateStdDev: FiniteDuration,
     deliverMean: FiniteDuration,
     deliverStdDev: FiniteDuration,
+    returnMean: FiniteDuration,
+    returnStdDev: FiniteDuration,
     generator: => Generator = Cmwc5.fromTime()
   ): F[DroneCtrlSleepRndEmulator[F]] =
     for {
       rndMove <- Rnd(gaussDist(moveMean, moveStdDev), generator)
       rndRot  <- Rnd(gaussDist(rotateMean, rotateStdDev), generator)
       rndDel  <- Rnd(gaussDist(deliverMean, deliverStdDev), generator)
-    } yield new DroneCtrlSleepRndEmulator(name, rndMove, rndRot, rndDel)
+      rndRet  <- Rnd(gaussDist(returnMean, returnStdDev), generator)
+    } yield new DroneCtrlSleepRndEmulator(name, rndMove, rndRot, rndDel, rndRet)
 
   private def gaussDist(mean: FiniteDuration, stdDev: FiniteDuration): Dist[FiniteDuration] =
     Gaussian(mean.toNanos.toDouble, stdDev.toNanos.toDouble).map(_.toLong.nanos)

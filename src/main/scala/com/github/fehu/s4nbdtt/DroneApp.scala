@@ -2,9 +2,10 @@ package com.github.fehu.s4nbdtt
 
 import cats.Parallel
 import cats.data.NonEmptyList
-import cats.effect.Sync
+import cats.effect.{ Resource, Sync }
 import cats.syntax.alternative._
 import cats.syntax.applicativeError._
+import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -17,7 +18,7 @@ import com.github.fehu.s4nbdtt.io.FileIO
 
 abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N]) {
   def initialState: DroneState[N]
-  def droneCtrl(name: String): F[DroneCtrl[F]]
+  def droneCtrl(name: String): Resource[F, DroneCtrl[F]]
 
   private lazy val logger = Slf4jLogger.getLogger[F]
 
@@ -31,14 +32,15 @@ abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N])
       _        <- logger.info("All programs passed validations.")
       _        <- logger.info("Beginning execution.")
       _ <- progs.parTraverse_ { case (name, prog) =>
-            for {
-              ctrl    <- droneCtrl(name)
-              executor = new DroneProgExecutor(ctrl, initialState)
-              _       <- logger.info(s"""Start execution of program "$name"""")
-              result  <- executor.exec(prog)
-              _       <- logger.info(s"""Program "$name" executed""")
-              _       <- writeReport(config.reports, name, result)
-            } yield ()
+             droneCtrl(name).use { ctrl =>
+               val executor = new DroneProgExecutor(ctrl, initialState)
+               for {
+                 _   <- logger.info(s"""Start execution of program "$name"""")
+                 res <- executor.exec(prog)
+                 _   <- logger.info(s"""Program "$name" executed""")
+                 _   <- writeReport(config.reports, name, res)
+               } yield ()
+             }
            }
       _ <- logger.info("All programs executed")
     } yield ()
@@ -85,6 +87,6 @@ abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N])
          |
          |${result.toList.map{ case DroneState(pos, dir) => s"$pos ${cfg.showDirection.show(dir)}" }.mkString("\n")}
          |""".stripMargin
-    FileIO.write[F](cfg.files, name, report)
+    FileIO.write[F](cfg.files, name, report) *> logger.debug(s"Wrote report $name")
   }
 }
