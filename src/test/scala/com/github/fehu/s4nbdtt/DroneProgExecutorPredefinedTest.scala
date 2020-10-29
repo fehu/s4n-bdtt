@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
 import com.github.fehu.s4nbdtt.io.FileIO
-import com.github.fehu.s4nbdtt.test.DroneCtrlNoOp
+import com.github.fehu.s4nbdtt.stub.DroneCtrlNoOp
 
 class DroneProgExecutorPredefinedTest extends AsyncWordSpec with AsyncIOSpec with Matchers  {
   import Direction._

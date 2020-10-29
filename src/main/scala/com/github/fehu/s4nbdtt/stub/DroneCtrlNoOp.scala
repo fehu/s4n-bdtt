@@ -1,4 +1,4 @@
-package com.github.fehu.s4nbdtt.test
+package com.github.fehu.s4nbdtt.stub
 
 import cats.Applicative
 
