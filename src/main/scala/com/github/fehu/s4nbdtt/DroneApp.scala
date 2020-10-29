@@ -1,51 +1,51 @@
 package com.github.fehu.s4nbdtt
 
+import cats.Parallel
 import cats.data.NonEmptyList
-import cats.effect.{ ExitCode, IO, IOApp }
+import cats.effect.Sync
 import cats.syntax.alternative._
 import cats.syntax.either._
+import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.show._
 import cats.syntax.traverse._
 
 import com.github.fehu.s4nbdtt.io.FileIO
-import com.github.fehu.s4nbdtt.stub.DroneCtrlNoOp
 
-object Main extends IOApp {
-  val initialState = DroneState(0, 0, Direction.North)
-
-  def run(args: List[String]): IO[ExitCode] =
+abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N]) {
+  def initialState: DroneState[N]
+  def droneCtrl: F[DroneCtrl[F]]
+  
+  def runApp: F[Unit] =
     for {
-      config   <- Config.default[IO]
+      config   <- Config.default[F]
       rawProgs <- readPrograms(config)
       progs    <- parseAndValidate(config, rawProgs)
-      // Execute progs
-      ctrl = new DroneCtrlNoOp[IO] // TODO: inject?
+      ctrl     <- droneCtrl
       executor = new DroneProgExecutor(ctrl, initialState)
       _ <- progs.parTraverse_ { case (name, prog) =>
              executor.exec(prog).flatMap(writeReport(config.reports, name, _))
            }
-      // Done
-    } yield ExitCode.Success
+    } yield ()
 
-  private type ProgName = String
-  private type RawProg = String
+  protected type ProgName = String
+  protected type RawProg = String
 
-  private def readPrograms(cfg: Config): IO[List[(ProgName, RawProg)]] =
+  protected def readPrograms(cfg: Config): F[List[(ProgName, RawProg)]] =
     for {
-      progs <- FileIO.readAll[IO](cfg.routes)
-      _     <- IO.raiseWhen(progs.isEmpty)(
-                 new NoProgramsFound(cfg.routes.path)
+      progs <- FileIO.readAll[F](cfg.routes)
+      _     <- F.whenA(progs.isEmpty)(
+                 F.raiseError(new NoProgramsFound(cfg.routes.path))
                )
-      _     <- IO.raiseWhen(progs.length > cfg.drones.value)(
-                 new TooManyProgramsException(progs.length, cfg.drones.value)
+      _     <- F.whenA(progs.length > cfg.drones.value)(
+                 F.raiseError(new TooManyProgramsException(progs.length, cfg.drones.value))
                )
     } yield progs
 
-  private def parseAndValidate(cfg: Config, raw: List[(ProgName, RawProg)]): IO[List[(ProgName, DroneProg)]] = {
+  protected def parseAndValidate(cfg: Config, raw: List[(ProgName, RawProg)]): F[List[(ProgName, DroneProg)]] = {
     val parser    = new DroneProgParser(cfg.drone)
-    val grid      = SymmetricZeroCenteredGrid(cfg.grid)
+    val grid      = SymmetricZeroCenteredGrid(cfg.grid, fromInt = num.fromInt)
     val validator = new DroneProgValidator(grid)
 
     val (failed, progs) = raw.map { case (name, raw) =>
@@ -60,16 +60,16 @@ object Main extends IOApp {
     }.separate
 
     NonEmptyList.fromList(failed)
-      .traverse(errors => IO.raiseError(new DroneProgramsException(errors)))
+      .traverse(errors => F.raiseError[List[(ProgName, DroneProg)]](new DroneProgramsException(errors)))
       .as(progs)
   }
 
-  private def writeReport[N](cfg: Config.Reports, name: ProgName, result: NonEmptyList[DroneState[N]]): IO[Unit] = {
+  protected def writeReport[N](cfg: Config.Reports, name: ProgName, result: NonEmptyList[DroneState[N]]): F[Unit] = {
     val report =
       s"""${cfg.header}
          |
          |${result.toList.map{ case DroneState(pos, dir) => s"$pos ${cfg.showDirection.show(dir)}" }.mkString("\n")}
          |""".stripMargin
-    FileIO.write[IO](cfg.files, name, report)
+    FileIO.write[F](cfg.files, name, report)
   }
 }
