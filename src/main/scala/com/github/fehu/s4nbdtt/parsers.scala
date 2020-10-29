@@ -1,10 +1,11 @@
 package com.github.fehu.s4nbdtt
 
-import cats.Order
+import cats.{ Order, Show }
 import cats.data.{ NonEmptyList, Validated, ValidatedNel }
 import cats.instances.list._
 import cats.syntax.apply._
 import cats.syntax.traverse._
+import cats.syntax.show._
 import cats.syntax.validated._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
@@ -47,7 +48,7 @@ class DroneProgParser(cfg: Config.Drone) {
       }
     val validatedCount = rawRoutes.length match {
       case 0                           => NoRoutes.invalidNel
-      case n if n > cfg.capacity.value => TooManyRoutes(n).invalidNel
+      case n if n > cfg.capacity.value => TooManyRoutes(n, cfg.capacity.value).invalidNel
       case _                           => ().validNel
     }
     (validatedCount *> validatedRoutes).map { routes =>
@@ -80,6 +81,32 @@ object DroneProgDefinitionError {
   }
 
   case object NoRoutes extends DroneProgDefinitionError
-  final case class TooManyRoutes(routes: Int) extends DroneProgDefinitionError
+  final case class TooManyRoutes(routes: Int, max: Int) extends DroneProgDefinitionError
 
+  implicit lazy val showDroneProgDefinitionError: Show[DroneProgDefinitionError] =
+    Show.show {
+      case InvalidCommands(index, raw, invalid) =>
+        val invalidStr = invalid.toList.map(i => s"'${i.cmd}'").mkString("[", ", ", "]")
+        s"""Invalid drone command(s) $invalidStr at route "$raw""""
+      case NoRoutes =>
+        "No routes are defined."
+      case TooManyRoutes(n, max) =>
+        s"Too many routes defined for the drone: $n. Max: $max."
+    }
+}
+
+class DroneProgramsParseException(failed: NonEmptyList[(String, NonEmptyList[DroneProgDefinitionError])])
+  extends Exception({
+    val indented = failed.toList.flatMap { case (name, errors) =>
+      val shownErrs = errors.toList.map(err => s"    - ${err.show}")
+      s"  $name:" :: shownErrs
+    }
+    s"""Errors on parsing drone program(s):
+       |$indented
+       |""".stripMargin
+  })
+
+object DroneProgramsParseException {
+  def one(progName: String, errors: NonEmptyList[DroneProgDefinitionError]): DroneProgramsParseException =
+    new DroneProgramsParseException(NonEmptyList.one(progName -> errors))
 }

@@ -54,7 +54,8 @@ class ProgParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
         val cap1 = cfg.capacity.value + 1
         forAll(AGens.genDroneProg(minRoutes = cap1, maxRoutes = cap1 * 10)) { case (prog, n) =>
           val progStr = stringifyDroneProg(prog, cfg.commands)
-          parser.parse(progStr) shouldBe DroneProgDefinitionError.TooManyRoutes(n).invalidNel
+          val error = DroneProgDefinitionError.TooManyRoutes(n, cfg.capacity.value)
+          parser.parse(progStr) shouldBe error.invalidNel
         }
       }
 
