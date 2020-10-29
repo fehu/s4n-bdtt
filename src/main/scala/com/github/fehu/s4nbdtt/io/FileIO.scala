@@ -1,9 +1,10 @@
 package com.github.fehu.s4nbdtt.io
 
-import java.io.{ File, FilenameFilter }
+import java.io.{ File, FileWriter, FilenameFilter }
 
 import cats.effect.Sync
 import cats.instances.list._
+import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
@@ -30,12 +31,8 @@ object FileIO {
       subNames  = files.map(_.getName.drop(prefL).dropRight(suffL))
     } yield subNames zip contents
 
-  def read[F[_]](cfg: Config.Files, subName: SubName)(implicit F: Sync[F]): F[Contents] =
-    for {
-      file     <- F.catchNonFatal { cfg.path.resolve(s"${cfg.prefix}$subName${cfg.suffix}").toFile }
-      contents <- read(file)
-    } yield contents
-    
+  def read[F[_]: Sync](cfg: Config.Files, subName: SubName): F[Contents] =
+    resolveFile[F](cfg, subName).flatMap(read[F])
 
   def read[F[_]](file: File)(implicit F: Sync[F]): F[Contents] =
     F.bracket(
@@ -45,4 +42,24 @@ object FileIO {
     )(
       s => F.delay(s.close())
     )
+
+  def write[F[_]](cfg: Config.Files, subName: SubName, contents: Contents)(implicit F: Sync[F]): F[Unit] =
+    F.delay { cfg.path.toFile.mkdirs() } *>
+    resolveFile[F](cfg, subName).flatMap(write(_, contents))
+
+  def write[F[_]](file: File, contents: Contents)(implicit F: Sync[F]): F[Unit] =
+    F.delay { file.createNewFile() } *>
+    F.bracket(
+      F.delay(new FileWriter(file))
+    )(
+      w => F.delay(w.write(contents))
+    )(
+      w => F.delay(w.close())
+    )
+
+  private def resolveFile[F[_]: Sync](cfg: Config.Files, subName: SubName) =
+    Sync[F].catchNonFatal {
+      cfg.path.resolve(s"${cfg.prefix}$subName${cfg.suffix}").toFile
+    }
+
 }
