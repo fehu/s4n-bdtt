@@ -3,6 +3,8 @@ package com.github.fehu.s4nbdtt
 import scala.Numeric.Implicits._
 import scala.Ordering.Implicits._
 
+import cats.Show
+
 trait Grid[N] {
   def isValid(position: Grid.Position[N]): Boolean
 
@@ -25,6 +27,8 @@ object Grid {
       Position.move(this, direction, grid)
 
     def validate(grid: Grid[N]): Either[InvalidPosition[N], Position[N]] = grid.validate(this, InvalidPosition(grid, _))
+
+    override def toString: String = s"($x, $y)"
   }
   
   object Position {
@@ -49,6 +53,13 @@ object Grid {
   sealed trait Invalid
   final case class InvalidPosition[N](grid: Grid[N], invalid: Position[N]) extends Invalid
   final case class InvalidMove[N](grid: Grid[N], from: Position[N], move: Direction, invalid: Position[N]) extends Invalid
+
+  object Invalid {
+    implicit lazy val showInvalid: Show[Invalid] = Show.show {
+      case InvalidPosition(grid, invalid)         => s"Invalid position $invalid on $grid."
+      case InvalidMove(grid, from, move, invalid) => s"Moving $move from $from would result in invalid position $invalid on $grid."
+    }
+  }
 }
 
 /**
@@ -62,6 +73,8 @@ class SymmetricZeroCenteredGrid[N: Numeric](halfHeight: N, halfWidth: N) extends
     position.x <=  halfWidth  &&
     position.y >= -halfHeight &&
     position.y <=  halfHeight
+
+  override def toString: String = s"Grid(x: [${-halfWidth}, $halfWidth], y: [${-halfHeight}, $halfHeight])"
 }
 
 object SymmetricZeroCenteredGrid {
