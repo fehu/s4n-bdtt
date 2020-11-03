@@ -29,11 +29,7 @@ lazy val root = (project in file("."))
       `scala-test` % Test,
       `scala-test-check` % Test
     ),
-    mainClass in Compile := Some("com.github.fehu.s4nbdtt.app.DroneEmulatorIOAppExample"),
-    // TODO: make separate `run` task
-    fork in (Compile, run) := true,
-    javaHome in (Compile, run) := Some(file(sys.env.getOrElse("GRAAL_HOME", ""))),
-    javaOptions in (Compile, run) += s"-agentlib:native-image-agent=config-output-dir=${ baseDirectory.value / "graal" }"
+    mainClass in Compile := Some("com.github.fehu.s4nbdtt.app.DroneEmulatorIOAppExample")
   )
 
 enablePlugins(NativeImagePlugin)
@@ -43,6 +39,8 @@ nativeImageVersion := "20.2.0"
 lazy val initializeAtRunTime = Seq(
   "org.slf4j.impl.StaticLoggerBinder"
 )
+
+nativeImageAgentOutputDir := baseDirectory.value / "graal"
 
 nativeImageOptions ++= Seq(
   "--no-fallback",
