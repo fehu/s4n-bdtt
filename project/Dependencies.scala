@@ -19,11 +19,15 @@ object Dependencies {
     lazy val `better-monadic-for` = "com.olegpy"    %% "better-monadic-for" % Version.betterMonadicFor
   }
 
+  // Graal / Provided
+  lazy val svm = "org.graalvm.nativeimage" % "svm" % Version.graal % Provided
+
   protected object Version {
     lazy val betterMonadicFor = "0.3.1"
     lazy val cats             = "2.2.0"
     lazy val catsEffect       = "2.2.0"
     lazy val catsEffectTest   = "0.4.1"
+    lazy val graal            = "20.2.0"
     lazy val kindProjector    = "0.11.0"
     lazy val log4cats         = "1.1.1"
     lazy val logback          = "1.2.3"

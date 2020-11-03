@@ -22,6 +22,8 @@ final case class Config(
 )
 
 object Config {
+  def defaultUnsafe: Config = ConfigSource.default.load[Config].valueOr(f => throw ConfigReaderException(f))
+
   def default[F[_]: Sync]: F[Config] = load(ConfigSource.default)
 
   def load[F[_]](source: ConfigSource)(implicit sync: Sync[F]): F[Config] =

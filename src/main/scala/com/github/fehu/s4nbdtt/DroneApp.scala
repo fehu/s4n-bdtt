@@ -22,9 +22,12 @@ abstract class DroneApp[F[_]: Parallel, N](implicit F: Sync[F], num: Numeric[N])
 
   private lazy val logger = Slf4jLogger.getLogger[F]
 
+  val config = Config.defaultUnsafe
+
   def runApp: F[Unit] = {
     for {
-      config   <- Config.default[F]
+      // TODO
+      // config   <- Config.default[F]
       _        <- logger.debug(s"Read app configuration: $config")
       rawProgs <- readPrograms(config)
       _        <- logger.info(s"Found ${rawProgs.length} drone programs")

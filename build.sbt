@@ -19,14 +19,53 @@ lazy val root = (project in file("."))
       `cats-core`,
       `cats-effect`,
       `log4cats-slf4j`,
-      `logback-classic`,
+      `logback-classic` % Runtime,
        pureconfig,
       `refined-pureconfig`,
+       spire,
       `cats-effect-scala-test` % Test,
       `refined-scala-check` % Test,
       `scala-check` % Test,
       `scala-test` % Test,
-      `scala-test-check` % Test,
-       spire % Test
-    )
+      `scala-test-check` % Test
+    ),
+    mainClass in Compile := Some("com.github.fehu.s4nbdtt.app.DroneEmulatorIOAppExample"),
+    // TODO: make separate `run` task
+    fork in (Compile, run) := true,
+    javaHome in (Compile, run) := Some(file(sys.env.getOrElse("GRAAL_HOME", ""))),
+    javaOptions in (Compile, run) += s"-agentlib:native-image-agent=config-output-dir=${ baseDirectory.value / "graal" }"
   )
+  .dependsOn(substitutions)
+
+lazy val substitutions = (project in file("substitutions"))
+  .settings(
+    name := "s4n-bdtt-substitutions",
+    skip in publish := true,
+    sources in (Compile, doc) := Seq.empty,
+    publishArtifact in (Compile, packageDoc) := false,
+    libraryDependencies += Dependencies.svm
+  )
+
+enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val initializeAtRunTime = Seq(
+  "org.slf4j.impl.StaticLoggerBinder"
+)
+
+graalVMNativeImageOptions ++= Seq(
+  "--no-fallback",
+  "--initialize-at-build-time",
+  "--initialize-at-run-time=" + initializeAtRunTime.mkString(","),
+  s"-H:DynamicProxyConfigurationFiles=${ baseDirectory.value / "graal" / "proxy-config.json" }",
+  s"-H:JNIConfigurationFiles=${ baseDirectory.value / "graal" / "jni-config.json" }",
+  s"-H:ReflectionConfigurationFiles=${ baseDirectory.value / "graal" / "reflect-config.json" }",
+  s"-H:ResourceConfigurationFiles=${ baseDirectory.value / "graal" / "resource-config.json" }",
+  "--allow-incomplete-classpath",
+  "--report-unsupported-elements-at-runtime",
+  // dev
+  "-H:+ReportExceptionStackTraces",
+  // This flag greatly helps to configure the image build to work as intended;
+  // the goal is to have as many classes initialized at build time and yet keep the correct semantics of the program.
+  // [[https://github.com/oracle/graal/blob/master/substratevm/CLASS-INITIALIZATION.md]]
+  "-H:+PrintClassInitialization"
+)
