@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
       `cats-core`,
       `cats-effect`,
       `log4cats-slf4j`,
-      `logback-classic` % Runtime,
+      `logback-classic`,
        pureconfig,
       `refined-pureconfig`,
        spire,
@@ -35,24 +35,16 @@ lazy val root = (project in file("."))
     javaHome in (Compile, run) := Some(file(sys.env.getOrElse("GRAAL_HOME", ""))),
     javaOptions in (Compile, run) += s"-agentlib:native-image-agent=config-output-dir=${ baseDirectory.value / "graal" }"
   )
-  .dependsOn(substitutions)
 
-lazy val substitutions = (project in file("substitutions"))
-  .settings(
-    name := "s4n-bdtt-substitutions",
-    skip in publish := true,
-    sources in (Compile, doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false,
-    libraryDependencies += Dependencies.svm
-  )
+enablePlugins(NativeImagePlugin)
 
-enablePlugins(GraalVMNativeImagePlugin)
+nativeImageVersion := "20.2.0"
 
 lazy val initializeAtRunTime = Seq(
   "org.slf4j.impl.StaticLoggerBinder"
 )
 
-graalVMNativeImageOptions ++= Seq(
+nativeImageOptions ++= Seq(
   "--no-fallback",
   "--initialize-at-build-time",
   "--initialize-at-run-time=" + initializeAtRunTime.mkString(","),
